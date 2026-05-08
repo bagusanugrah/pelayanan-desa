@@ -5,34 +5,42 @@ on:
     branches: [ main ]
 
 jobs:
+  # --- JOB 1: DEPLOY BACKEND (PAKAI JALUR PROXY OTOMATIS) ---
   deploy-backend:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Deploy Backend
+      - name: Deploy Backend via Proxy
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.FRONTEND_IP }}
+          # Target utama sekarang langsung IP Private Backend
+          host: ${{ secrets.BACKEND_IP }} 
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          debug: true
+          
+          # Jembatannya (Proxy/Bastion) adalah Frontend
+          proxy_host: ${{ secrets.FRONTEND_IP }}
+          proxy_username: ubuntu
+          proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          
+          script_stop: true
+          # Script di bawah ini sekarang otomatis dijalankan di EC2 BACKEND
           script: |
-            ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.BACKEND_IP }} << 'EOF'
-              cd ~/pelayanan-desa
-              git pull origin main
-              cd backend
-              
-              # INJEKSI .ENV ASLI (Menimpa Dummy)
-              echo "${{ secrets.BACKEND_ENV }}" > .env
-              
-              sudo docker build -t backend-desa .
-              sudo docker stop backend-app || true
-              sudo docker rm backend-app || true
-              sudo docker run -d -p 5000:5000 --name backend-app --restart always backend-desa
-            EOF
-
+            cd ~/pelayanan-desa
+            git pull origin main
+            cd backend
+            
+            # Injeksi .env asli
+            echo "${{ secrets.BACKEND_ENV }}" > .env
+            
+            # Rebuild & Run Docker
+            sudo docker build -t backend-desa .
+            sudo docker stop backend-app || true
+            sudo docker rm backend-app || true
+            sudo docker run -d -p 5000:5000 --name backend-app --restart always backend-desa
+            
   deploy-frontend:
     needs: deploy-backend
     runs-on: ubuntu-latest
