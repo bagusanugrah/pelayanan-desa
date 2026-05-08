@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import TestAPI from './pages/TestAPI';
 
 /**
  * Penjaga 1: AuthenticatedRoute
@@ -67,6 +68,9 @@ function App() {
               </ProtectedRoute>
             } 
           />
+
+          {/* Debug: Test API Connection (Accessible without auth) */}
+          <Route path="/test-api" element={<TestAPI />} />
 
           {/* Pengalihan Otomatis */}
           <Route path="/" element={<Navigate to="/login" replace />} />
