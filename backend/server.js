@@ -378,5 +378,10 @@ app.put('/api/pengaduan/:id/status', authenticate, async (req, res) => {
   }
 });
 
+// Endpoint untuk cek status server (Health Check)
+app.get('/', (req, res) => {
+  res.status(200).json({ message: "Backend Pelayanan Desa API is Running!" });
+});
+
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Backend meluncur di port ${PORT}`));
