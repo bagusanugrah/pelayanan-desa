@@ -9,7 +9,7 @@ env:
   AWS_REGION: ap-southeast-2                   # Cek lagi region kamu us-east-1 atau ap-southeast-1?
   ECR_REPOSITORY: komputasiawan/backend-desa            # Nama repo ECR yang tadi kamu buat
   ECS_CLUSTER: cluster-desa-digital       # Nama cluster ECS kamu
-  ECS_SERVICE: service-backend            # Nama service (nanti kita buat habis ini)
+  ECS_SERVICE: service-backend            # Nama service
 
 jobs:
   deploy:
@@ -38,6 +38,6 @@ jobs:
         IMAGE_TAG: latest
       run: |
         # Proses masak Docker Image
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./backend
         # Kirim ke gudang ECR
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
