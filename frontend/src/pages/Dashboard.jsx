@@ -3,7 +3,7 @@ import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState('surat'); // 'surat' atau 'pengaduan'
+  const [activeTab, setActiveTab] = useState('surat');
   const [suratList, setSuratList] = useState([]);
   const [pengaduanList, setPengaduanList] = useState([]);
   const [formData, setFormData] = useState({ jenisSurat: 'Surat Domisili', keperluan: '', judul: '', deskripsi: '' });
@@ -30,6 +30,20 @@ const Dashboard = () => {
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login');
+  };
+
+  // --- FUNGSI DOWNLOAD AMAN (ANTI BLOCKED) ---
+  const handleDownload = (fileUrl) => {
+    if (!fileUrl) return alert("File belum tersedia");
+    
+    // Kita buat elemen 'a' bayangan agar tidak dianggap popup oleh browser
+    const link = document.createElement('a');
+    link.href = fileUrl; // fileUrl sudah berisi https://cloudfront...
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const submitSurat = async (e) => {
@@ -62,31 +76,30 @@ const Dashboard = () => {
     }
   };
 
-const handleDelete = async (id) => {
-  if (window.confirm("Yakin ingin membatalkan pengajuan ini?")) {
-    try {
-      await api.delete(`/surat/${id}`);
-      fetchData(); // Refresh daftar
-    } catch (err) {
-      alert(err.response?.data?.error || "Gagal menghapus");
+  const handleDelete = async (id) => {
+    if (window.confirm("Yakin ingin membatalkan pengajuan ini?")) {
+      try {
+        await api.delete(`/surat/${id}`);
+        fetchData();
+      } catch (err) {
+        alert(err.response?.data?.error || "Gagal menghapus");
+      }
     }
-  }
-};
+  };
 
-const handleDeletePengaduan = async (id) => {
-  if (window.confirm("Batalkan laporan pengaduan ini?")) {
-    try {
-      await api.delete(`/pengaduan/${id}`);
-      fetchData(); // Refresh list
-    } catch (err) {
-      alert(err.response?.data?.error || "Gagal menghapus");
+  const handleDeletePengaduan = async (id) => {
+    if (window.confirm("Batalkan laporan pengaduan ini?")) {
+      try {
+        await api.delete(`/pengaduan/${id}`);
+        fetchData();
+      } catch (err) {
+        alert(err.response?.data?.error || "Gagal menghapus");
+      }
     }
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Navbar */}
       <nav className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
         <h1 className="text-xl font-bold text-blue-600">DesaDigital Masyarakat</h1>
         <button onClick={handleLogout} className="text-sm font-medium text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg transition">Keluar</button>
@@ -95,7 +108,6 @@ const handleDeletePengaduan = async (id) => {
       <div className="max-w-6xl mx-auto p-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Kolom Kiri: Form Input */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
               <div className="flex gap-2 mb-6 bg-slate-100 p-1 rounded-xl">
@@ -107,11 +119,14 @@ const handleDeletePengaduan = async (id) => {
                 <form onSubmit={submitSurat} className="space-y-4">
                   <div>
                     <label className="text-xs font-bold text-slate-500 uppercase">Jenis Surat</label>
-                    <select className="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                      onChange={e => setFormData({...formData, jenisSurat: e.target.value})}>
-                      <option>Surat Domisili</option>
-                      <option>Surat Keterangan Usaha</option>
-                      <option>Surat Belum Menikah</option>
+                    <select 
+                      className="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.jenisSurat}
+                      onChange={e => setFormData({...formData, jenisSurat: e.target.value})}
+                    >
+                      <option value="Surat Domisili">Surat Domisili</option>
+                      <option value="Surat Keterangan Usaha">Surat Keterangan Usaha</option>
+                      <option value="Surat Belum Menikah">Surat Belum Menikah</option>
                     </select>
                   </div>
                   <div>
@@ -146,7 +161,6 @@ const handleDeletePengaduan = async (id) => {
             </div>
           </div>
 
-          {/* Kolom Kanan: Tracking List */}
           <div className="lg:col-span-2 space-y-6">
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
               <span className="w-2 h-6 bg-blue-600 rounded-full"></span>
@@ -154,38 +168,39 @@ const handleDeletePengaduan = async (id) => {
             </h2>
 
             <div className="grid grid-cols-1 gap-4">
-              {/* Render Surat */}
               {suratList.map(item => (
                 <div key={item.id} className="bg-white p-5 rounded-2xl border border-slate-200 flex justify-between items-center">
                     <div>
-                    <p className="text-xs font-bold text-blue-600 uppercase mb-1">{item.jenisSurat}</p>
-                    <p className="text-slate-700 font-medium">{item.keperluan}</p>
+                      <p className="text-xs font-bold text-blue-600 uppercase mb-1">{item.jenisSurat}</p>
+                      <p className="text-slate-700 font-medium">{item.keperluan}</p>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${item.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${item.status === 'pending' ? 'bg-amber-100 text-amber-700' : item.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                         {item.status}
-                    </span>
-                    
-                    {/* Tombol Hapus: Hanya muncul jika status pending */}
-                    {item.status === 'pending' && (
+                      </span>
+                      
+                      {item.status === 'pending' && (
                         <button 
-                        onClick={() => handleDelete(item.id)}
-                        className="text-[10px] text-red-500 font-bold hover:underline"
+                          onClick={() => handleDelete(item.id)}
+                          className="text-[10px] text-red-500 font-bold hover:underline"
                         >
-                        Batalkan
+                          Batalkan
                         </button>
-                    )}
-                    
-                    {item.fileUrl && (
-                        <a href={`http://localhost:5000${item.fileUrl}`} target="_blank" className="text-xs text-blue-500 font-bold hover:underline italic">
-                        Download PDF
-                        </a>
-                    )}
+                      )}
+                      
+                      {/* FIX: Gunakan tombol dengan handleDownload agar tidak blocked */}
+                      {item.fileUrl && (
+                        <button 
+                          onClick={() => handleDownload(item.fileUrl)} 
+                          className="text-xs text-blue-500 font-bold hover:underline italic"
+                        >
+                          Download PDF
+                        </button>
+                      )}
                     </div>
                 </div>
-                ))}
+              ))}
 
-              {/* Render Pengaduan */}
               {pengaduanList.map(item => (
                 <div key={item.id} className="bg-white p-5 rounded-2xl border border-slate-200 border-l-4 border-l-orange-400">
                   <div className="flex justify-between items-start">
@@ -197,7 +212,6 @@ const handleDeletePengaduan = async (id) => {
                       <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold uppercase">
                         {item.status}
                       </span>
-                      {/* Tombol Hapus Masyarakat */}
                       {item.status === 'pending' && (
                         <button 
                           onClick={() => handleDeletePengaduan(item.id)}
