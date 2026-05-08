@@ -17,6 +17,7 @@ jobs:
           host: ${{ secrets.FRONTEND_IP }}
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          debug: true
           script: |
             ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.BACKEND_IP }} << 'EOF'
               cd ~/pelayanan-desa
@@ -45,6 +46,7 @@ jobs:
           host: ${{ secrets.FRONTEND_IP }}
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          debug: true
           script: |
             cd ~/pelayanan-desa
             git pull origin main
