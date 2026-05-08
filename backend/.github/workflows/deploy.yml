@@ -1,0 +1,43 @@
+name: Deploy Backend ke Amazon ECS
+
+on:
+  push:
+    branches:
+      - main  # Ganti jadi 'master' kalau branch utamamu namanya master
+
+env:
+  AWS_REGION: ap-southeast-2                   # Cek lagi region kamu us-east-1 atau ap-southeast-1?
+  ECR_REPOSITORY: komputasiawan/backend-desa            # Nama repo ECR yang tadi kamu buat
+  ECS_CLUSTER: cluster-desa-digital       # Nama cluster ECS kamu
+  ECS_SERVICE: service-backend            # Nama service (nanti kita buat habis ini)
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: latest
+      run: |
+        # Proses masak Docker Image
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        # Kirim ke gudang ECR
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
